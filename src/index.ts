@@ -1,3 +1,4 @@
+import { orchestrator } from "./backend/orchestrator";
 import { app } from "./backend/server"
 import { podPool } from "./k8s/pod-pool"
 import { redis } from "./queue/redis-client"
@@ -9,6 +10,7 @@ async function main(): Promise<void> {
   await podPool.ready
   const status = podPool.getPoolStatus()
   console.log(`✅ Pod pool ready: ${status.total} pods`)
+  orchestrator.start();
 
   const port = process.env.PORT || 3000
   const redisHost = process.env.REDIS_HOST || "localhost"

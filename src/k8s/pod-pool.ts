@@ -157,6 +157,11 @@ export class PodPool {
 
     console.log(`📦 execInPod ${podName}: ${command}`)
 
+    // Bypass WebSocket client under Bun due to lack of support for passing custom TLS config/options.
+    if (typeof Bun !== "undefined") {
+      return runKubectlExec(this.namespace, podName, command)
+    }
+
     try {
       await Promise.race(
         [
@@ -177,7 +182,12 @@ export class PodPool {
         ]
       )
     } catch (error) {
-      console.log(`⚠️ Kubernetes Exec API failed for ${podName}; falling back to kubectl exec`)
+      //console.log(`⚠️ Kubernetes Exec API failed for ${podName}; falling back to kubectl exec`);
+      console.error(
+        `⚠️ Kubernetes Exec API failed for ${podName}:`,
+        error
+      )
+
       return runKubectlExec(this.namespace, podName, command)
     }
 

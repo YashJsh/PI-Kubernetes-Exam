@@ -27,7 +27,38 @@ export class PodManager {
     void step
     void podPool
     void resultQueue
-    throw new Error("TODO: implement dispatch")
+
+    const pod = await podPool.acquirePod();
+    resultQueue.push({
+      podId: pod.podId,
+      status: "RUNNING",
+      stepId: step.stepId,
+      workflowId: step.workflowId
+    });
+
+    try {
+      const result = await podPool.execInPod(pod.podId, step.command);
+      await resultQueue.push({
+        podId: pod.podId,
+        status: "COMPLETED",
+        stepId: step.stepId,
+        workflowId: step.workflowId,
+        stdout: result,
+        exitCode: 0
+      })
+
+    } catch (error: any) {
+      await resultQueue.push({
+        podId: pod.podId,
+        status: "FAILED",
+        stepId: step.stepId,
+        workflowId: step.workflowId,
+        error: error.message
+      })
+    }
+    finally {
+      podPool.releasePod(pod.podId);
+    }
   }
 }
 
